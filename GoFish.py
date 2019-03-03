@@ -8,8 +8,11 @@ comp_hand = Hand()
 your_score = 0
 comp_score = 0
 values = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King']
+recent_guesses = []
+last_guess = 1
 
 def main():
+    global recent_guesses
     turn = 1
     over = False
     global your_score
@@ -32,7 +35,7 @@ def main():
     y = 7
     while not done and y >= 2:
         y = your_hand.check_pairs()
-        if y != 0:
+        if y != -1:
             your_score += 1
         else:
             done = True
@@ -40,7 +43,7 @@ def main():
     y = 7
     while not done and y >= 2:
         y = comp_hand.check_pairs()
-        if y != 0:
+        if y != -1:
             comp_score += 1
         else:
             done = True
@@ -48,7 +51,7 @@ def main():
 
     while deck.__len__() > 0 and not over:
         if turn == 1:
-            print(" hand size " + str(your_hand.hand_size()))
+            #print(" hand size " + str(your_hand.hand_size()))
             your_hand.print()
             # comp_hand.print()  for testing purposes
             val = 0
@@ -78,12 +81,25 @@ def main():
                 else:
                     print("\nYou get to go again!\n")
             else:
+                recent_guesses.append(val)
+                if recent_guesses.__len__() > 4: #holds a memory of 4
+                    recent_guesses.pop(0)
                 print("\n\nGO FISH!!!\n\n")
-                your_hand.add_card(hand_out())
+                r = hand_out()
+                your_hand.add_card(r)
                 y = your_hand.check_pairs()
-                if y != 0:
+                if y != -1:
                     your_score += 1
-                    print("You got a match!\n")
+                    na = str(r.value)
+                    if r.value == 11:
+                        na = "Jack"
+                    elif r.value == 12:
+                        na = "Queen"
+                    elif r.value == 13:
+                        na = "King"
+                    elif r == 1:
+                        na = "Ace"
+                    print("You got a match to your " + na + " card!\n")
                     if your_hand.hand_size() == 0:
                         print("\nYou're out of cards! \n")
                         over = True
@@ -98,12 +114,28 @@ def main():
                     turn = 2
                 print_scores()
 
-        if turn == 2:
+        elif turn == 2:
             r = comp_request()
             inp = input("Enter any value to see the computer's turn\n\n") #so there is a pause in the game
+            na = str(r)
+            if r == 11:
+                na = "Jack"
+            elif r == 12:
+                na = "Queen"
+            elif r == 13:
+                na = "King"
             if your_hand.get_card(r):
                 comp_hand.get_card(r)
-                print("The computer requested a(n) " + str(r) + " and you had it!\n")
+                na = str(r)
+                if r == 11:
+                    na = "Jack"
+                elif r == 12:
+                    na = "Queen"
+                elif r == 13:
+                    na = "King"
+                elif r == 1:
+                    na = "Ace"
+                print("The computer requested a(n) " + na + " and you had it!\n")
                 print_scores()
                 comp_score += 1
                 if your_hand.hand_size() == 0:
@@ -115,11 +147,11 @@ def main():
                 else:
                     print("\nThe computer gets to go again!\n")
             else:
-                print("The computer requested a(n) " + str(r) + " but you didn't have one.\n")
+                print("The computer requested a(n) " + na + " but you didn't have one.\n")
                 print("\n\nGO FISH!!!\n\n")
                 comp_hand.add_card(hand_out())
                 y = comp_hand.check_pairs()
-                if y != 0:
+                if y != -1:
                     comp_score += 1
                     print("It got a match!\n")
                     if your_hand.hand_size() == 0:
@@ -156,7 +188,15 @@ def hand_out():
 
 
 def comp_request():
+    global last_guess
+    for card in comp_hand.hand:
+        if card.value in recent_guesses:
+            last_guess = card.value
+            return card.value
     r = random.choice(comp_hand.hand)
+    while last_guess == r:
+        r = random.choice(comp_hand.hand)
+        last_guess = r
     return r.value
 
 
